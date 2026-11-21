@@ -1,0 +1,3 @@
+@echo off
+title 屏幕文字 -> image.h
+start "" powershell -NoExit -NoProfile -ExecutionPolicy Bypass -Command "Write-Host '=== 屏幕文字生成器 ===' -ForegroundColor Cyan; Write-Host '多行用 | 分隔，例如:  张正^|大二' -ForegroundColor Gray; $t = Read-Host '输入要显示的文字'; if ([string]::IsNullOrWhiteSpace($t)) { Write-Host '没输入，退出' -ForegroundColor Yellow } else { & '%~dp0text2h.ps1' -Text $t; Write-Host ''; Write-Host '回到 Arduino IDE 点上传即可' -ForegroundColor Green }; Write-Host '按回车关闭窗口' -ForegroundColor DarkGray; Read-Host | Out-Null; exit"

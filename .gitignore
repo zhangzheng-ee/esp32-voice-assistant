@@ -1,0 +1,43 @@
+# ===== 第三方库（体积大，用 Arduino 库管理器装）=====
+libraries/
+
+# ===== 音频素材（几百 MB，自己准备）=====
+audio_src/*.wav
+audio_src/*.mp3
+audio_src/*.m4a
+audio_src/*.flac
+audio_src/*.pcm
+audio_src/*.ogg
+audio_src/*.png
+audio_src/*.jpg
+audio_src/mic_dump*.txt
+
+# ===== 生成的固件镜像 =====
+*.bin
+littlefs.bin
+*.elf
+*.map
+
+# ===== 由脚本生成的头文件（可重新生成）=====
+plantest/image.h
+plantest/audio.h
+plantest/test_img.h
+plantest/image_photo_backup.h
+plantest/data/
+
+# ===== 备份与临时 =====
+backup/
+tts_out.log
+tts_err.log
+*.tmp
+*.log
+build/
+
+# ===== 系统 =====
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ===== Python =====
+__pycache__/
+*.pyc
