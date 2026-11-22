@@ -37,9 +37,7 @@
 // ---------------------------------------------------------------- 改这里
 const char *WIFI_SSID = "YOUR_WIFI_SSID";           // iPhone 热点（开"最大兼容性"= 2.4GHz）
 const char *WIFI_PASS = "YOUR_WIFI_PASSWORD";
-const char *SERVER_HOST = "192.168.1.100";    // 电脑在 iPhone 热点网段的 IP（会变，换网要改）
-const uint16_t SERVER_PORT = 3102;
-const char *DEVICE_TOKEN = "YOUR_DEVICE_TOKEN_HERE";
+#include "config.h"   // 网络与设备令牌；本文件不入库，模板见 config.example.h
 // -------------------------------------------------------------------------
 
 #define PIN_MIC_SCK 4
