@@ -37,7 +37,29 @@
 // ---------------------------------------------------------------- 改这里
 const char *WIFI_SSID = "YOUR_WIFI_SSID";           // iPhone 热点（开"最大兼容性"= 2.4GHz）
 const char *WIFI_PASS = "YOUR_WIFI_PASSWORD";
-#include "config.h"   // 网络与设备令牌；本文件不入库，模板见 config.example.h
+#include "config.h"
+
+// ---- 1.28" 圆屏 GC9A01（SPI）----
+#include <Arduino_GFX_Library.h>
+#include "pics/images.h"
+
+#define LCD_SCLK 12
+#define LCD_MOSI 11
+#define LCD_DC    9
+#define LCD_CS   10
+#define LCD_RST  14
+
+Arduino_DataBus *lcdBus = new Arduino_ESP32SPI(LCD_DC, LCD_CS, LCD_SCLK, LCD_MOSI, GFX_NOT_DEFINED, 8000000);  // 8MHz，降 SPI 干扰
+Arduino_GFX *gfx = new Arduino_GC9A01(lcdBus, LCD_RST, 0, true);
+
+const uint16_t *PICS[] = { IMG_LISTEN, IMG_THINK, IMG_SPEAK };
+const int PIC_N = 3;
+int picIdx = 0;
+
+void showPic(int i) {
+  if (!gfx) return;
+  gfx->draw16bitRGBBitmap(0, 0, (uint16_t *)PICS[i], IMG_W, IMG_H);
+}   // 网络与设备令牌；本文件不入库，模板见 config.example.h
 // -------------------------------------------------------------------------
 
 #define PIN_MIC_SCK 4
@@ -57,6 +79,7 @@ const char *WIFI_PASS = "YOUR_WIFI_PASSWORD";
 int16_t *recBuf = nullptr;      // PSRAM 里的录音缓冲
 size_t recBytes = 0;
 bool recording = false;
+bool playing = false;   // 正在播放服务器音频时不要喂静音
 unsigned long recStart = 0;
 WiFiClient net;
 
@@ -172,13 +195,32 @@ String postUtter(const uint8_t *data, size_t len) {
   net.print("Connection: keep-alive\r\n\r\n");
   // 分块写，别一次 printf 835KB
   size_t sent = 0;
-  size_t chunk = 4096;
+  size_t chunk = 1024;          // 小块推，避开 TCP 发送缓冲被一口气塞满
+  unsigned long lastProgress = millis();
+  unsigned long t0up = millis();
+  int retries = 0;
   while (sent < len) {
     size_t n = (len - sent > chunk) ? chunk : (len - sent);
     size_t w = net.write(data + sent, n);
-    if (w == 0) { Serial.println("[net] 上传断了"); net.stop(); return ""; }
-    sent += w;
+    if (w > 0) {
+      sent += w;
+      lastProgress = millis();
+      retries = 0;
+      delay(1);                 // 给 lwIP 一点时间把数据推出去
+    } else {
+      retries++;
+      if (!net.connected()) {
+        Serial.printf("[net] 断线 sent=%u/%u rssi=%d\n", (unsigned)sent, (unsigned)len, WiFi.RSSI());
+        net.stop(); return "";
+      }
+      if (millis() - lastProgress > 20000) {
+        Serial.printf("[net] 卡住 sent=%u/%u retries=%d rssi=%d\n", (unsigned)sent, (unsigned)len, retries, WiFi.RSSI());
+        net.stop(); return "";
+      }
+      delay(3);
+    }
   }
+  Serial.printf("[net] 上传完成 %u 字节 %lums rssi=%d\n", (unsigned)len, millis() - t0up, WiFi.RSSI());
   long cl = -1;
   int st = readHttpHead(net, &cl, nullptr);
   Serial.printf("[net] /utter → %d\n", st);
@@ -196,18 +238,37 @@ String postUtter(const uint8_t *data, size_t len) {
 
 /** 长轮询等她说的话，收到的 PCM 直接边收边放 */
 void pullAndPlay(long waitMs) {
-  net.stop();          // 强制新建连接，避免 /utter 的残留响应污染 /say
-  delay(60);
-  if (!connectServer()) return;
-  String path = String("/say?token=") + DEVICE_TOKEN + "&wait=" + String(waitMs);
-  net.printf("GET %s HTTP/1.1\r\n", path.c_str());
-  net.printf("Host: %s:%u\r\n", SERVER_HOST, SERVER_PORT);
-  net.print("Connection: close\r\n\r\n");
-  long cl = -1;
+  playing = true;
+  unsigned long tWait = millis();
   String xText;
-  int st = readHttpHead(net, &cl, &xText);
-  if (st == 204) { Serial.println("[net] 她暂时没说话"); net.stop(); return; }
-  if (st != 200) { Serial.printf("[net] /say → %d\n", st); net.stop(); return; }
+  long cl = -1;
+  int status = 0;
+  int tries = 0;
+
+  // 她要想几秒才回，服务端一次最多等 waitMs；204 就再来一轮，总共最多等 60 秒
+  while (true) {
+    net.stop();          // 每轮新连接，避免上一轮残留响应污染
+    delay(60);
+    if (!connectServer()) { playing = false; return; }
+    String path = String("/say?token=") + DEVICE_TOKEN + "&wait=" + String(waitMs);
+    net.printf("GET %s HTTP/1.1\r\n", path.c_str());
+    net.printf("Host: %s:%u\r\n", SERVER_HOST, SERVER_PORT);
+    net.print("Connection: close\r\n\r\n");
+    cl = -1;
+    xText = "";
+    status = readHttpHead(net, &cl, &xText);
+    if (status == 200) break;
+    if (status == 204) {
+      tries++;
+      net.stop();
+      if (millis() - tWait > 60000) { Serial.printf("[net] 等了 %d 轮她还没回，放弃\n", tries); playing = false; return; }
+      Serial.printf("[net] 她还在想（第 %d 轮，已等 %lus）\n", tries, (millis() - tWait) / 1000);
+      delay(800);
+      continue;
+    }
+    Serial.printf("[net] /say → %d\n", status);
+    net.stop(); playing = false; return;
+  }
   Serial.printf("[她] %s（%ld 字节）\n", xText.c_str(), cl);
 
 
@@ -240,7 +301,16 @@ void pullAndPlay(long waitMs) {
     t0 = millis();
   }
   Serial.printf("[喇叭] 放完 %ld 字节\n", got);
+  // 用静音把 DMA 尾部残余冲掉，否则最后一段会被循环重播成嗡嗡声
+  {
+    static int16_t flush[1600];   // 1600 样本 × 2 声道 = 3200 字节/次，约 60ms
+    for (int k = 0; k < 6; k++) {
+      size_t fw = 0;
+      i2s_channel_write(spkHandle, flush, sizeof(flush), &fw, portMAX_DELAY);
+    }
+  }
   net.stop();
+  playing = false;
 }
 
 // ------------------------------------------------------------------ 录音
@@ -297,25 +367,15 @@ void setup() {
   setupI2sMic();
   setupI2sSpk();
 
-  // ---- 开机自检：放 0.6 秒 1kHz 正弦，验证喇叭通路 ----
-  {
-    Serial.println("[spk] 自检音 1kHz 2秒 60%...");
-    static int16_t tone[1024];   // 512 帧 stereo
-    unsigned long totalFrames = 0;
-    unsigned long wantFrames = (unsigned long)SR * 2;   // 2 秒
-    while (totalFrames < wantFrames) {
-      for (int i = 0; i < 512; i++) {
-        int16_t v = (int16_t)(sinf(2.0f * PI * 1000.0f * (totalFrames + i) / SR) * 20000);
-        tone[i * 2] = v;
-        tone[i * 2 + 1] = v;
-      }
-      size_t w = 0;
-      esp_err_t e = i2s_channel_write(spkHandle, tone, sizeof(tone), &w, portMAX_DELAY);
-      if (totalFrames == 0) Serial.printf("[spk] write ret=%d written=%u/%u\n", (int)e, (unsigned)w, (unsigned)sizeof(tone));
-      totalFrames += 512;
-    }
-    Serial.printf("[spk] 自检音结束，共 %lu 帧\n", totalFrames);
+  // 屏幕：GC9A01 上电
+  if (gfx->begin()) {
+    gfx->fillScreen(0x0000);
+    showPic(0);
+    Serial.println("[lcd] GC9A01 OK, 已显示第 1 张");
+  } else {
+    Serial.println("[lcd] begin 失败");
   }
+
 
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);
@@ -331,7 +391,7 @@ void loop() {
   // 空闲时喂静音，避免 I2S DMA 反复重播缓冲导致"一直响"
   static uint32_t lastIdle = 0;
   // 16kHz stereo 16bit = 64000 字节/秒 → 每 10ms 需要 640 字节
-  if (!recording && millis() - lastIdle >= 10) {
+  if (!playing && millis() - lastIdle >= 10) {
     lastIdle = millis();
     static int16_t silence[320];      // 160 帧 × 2 声道 = 320 个 int16 = 640 字节
     size_t w = 0;
