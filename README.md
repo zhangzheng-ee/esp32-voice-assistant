@@ -186,13 +186,34 @@ python asr_server.py       # :8080
 python tts_server.py       # :8081
 ```
 
-### 3. 烧固件
+### 3. 配置（必做，否则编译报 secrets.h: No such file）
+
+`ash
+# 每份配置都有对应模板，复制后填自己的值（真文件已在 .gitignore 里）
+cp terminal/config.example.h   terminal/config.h
+cp asrtest/secrets.example.h   asrtest/secrets.h
+cp aitest/secrets.example.h    aitest/secrets.h
+cp wifitest/secrets.example.h  wifitest/secrets.h
+`
+
+需要填的项：
+
+| 文件 | 变量 | 说明 |
+|---|---|---|
+| luefish/config.h | WIFI_SSID / WIFI_PASS | 2.4GHz 热点（5GHz 连不上） |
+| luefish/config.h | SERVER_HOST | 电脑在同一局域网内的 IP |
+| luefish/config.h | DEVICE_TOKEN | 自定字符串，与电脑端 config.json 里的一致 |
+| srtest/secrets.h 等 | SSID / PASS | 同上 |
+| srtest/secrets.h 等 | DEEPSEEK_API_KEY | https://platform.deepseek.com 申请 |
+
+### 4. 烧固件
+
 
 ```powershell
 arduino-cli compile --fqbn "esp32:esp32:esp32s3:USBMode=hwcdc,CDCOnBoot=default,FlashSize=16M,PartitionScheme=app3M_little12M,PSRAM=opi,UploadSpeed=921600" --upload -p COM10 asrtest
 ```
 
-### 4. 生成的资源文件
+### 5. 生成的资源文件
 
 `image.h` 和 `audio.h` 不在仓库里（生成物），需要自己生成：
 
