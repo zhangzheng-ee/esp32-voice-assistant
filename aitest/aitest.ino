@@ -2,9 +2,8 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
-const char* SSID     = "YOUR_WIFI_SSID";
-const char* PASS     = "YOUR_WIFI_PASSWORD";
-const char* API_KEY  = "YOUR_DEEPSEEK_API_KEY";
+#include "secrets.h"
+const char* API_KEY = DEEPSEEK_API_KEY;
 const char* API_HOST = "api.deepseek.com";
 const int   API_PORT = 443;
 const char* MODEL    = "deepseek-chat";

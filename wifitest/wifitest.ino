@@ -1,8 +1,7 @@
 // WiFi 连接测试 —— 连 iPhone 热点
+#include "secrets.h"
 #include <WiFi.h>
 
-const char* SSID = "YOUR_WIFI_SSID";
-const char* PASS = "YOUR_WIFI_PASSWORD";
 
 void setup() {
   Serial.begin(115200);

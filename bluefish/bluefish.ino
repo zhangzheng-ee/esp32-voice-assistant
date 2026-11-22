@@ -35,8 +35,6 @@
 #include <driver/i2s.h>
 
 // ---------------------------------------------------------------- 改这里
-const char *WIFI_SSID = "YOUR_WIFI_SSID";           // iPhone 热点（开"最大兼容性"= 2.4GHz）
-const char *WIFI_PASS = "YOUR_WIFI_PASSWORD";
 #include "config.h"
 
 // ---- 1.28" 圆屏 GC9A01（SPI）----

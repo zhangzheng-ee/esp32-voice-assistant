@@ -26,13 +26,12 @@
 #define TFT_CS   10
 #define TFT_RST  14
 
-const char* SSID     = "YOUR_WIFI_SSID";
-const char* PASS     = "YOUR_WIFI_PASSWORD";
 const char* SRV_HOST = "192.168.1.100";
 const int   ASR_PORT = 8080;
 const int   TTS_PORT = 8081;
 
-const char* API_KEY  = "YOUR_DEEPSEEK_API_KEY";
+#include "secrets.h"
+const char* API_KEY = DEEPSEEK_API_KEY;
 const char* API_HOST = "api.deepseek.com";
 const char* MODEL    = "deepseek-chat";
 
