@@ -41,3 +41,11 @@ desktop.ini
 # ===== Python =====
 __pycache__/
 *.pyc
+# ===== 根目录生成物 / 临时脚本 =====
+test_img.h
+read2.py
+read_resume.py
+
+# ===== 本地调试脚本（含个人网络信息，不入库）=====
+clone_voice.mjs
+test_voice.mjs
