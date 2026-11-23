@@ -104,7 +104,7 @@
 
 项目里有两条跑通的链路，二选一：
 
-**A. 直连大模型（`asrtest/`）** —— 自己调 ASR / 大模型 / TTS 三个接口，适合学原理，每一段都看得见。
+**A. 直连大模型（`experiments/asrtest/`）** —— 自己调 ASR / 大模型 / TTS 三个接口，适合学原理，每一段都看得见。
 
 **B. 接 AI 角色（`terminal/`）** —— 板子只负责录音和播放，说什么由电脑上的角色服务决定（HTTP 3102）。适合做「有性格的实体终端」。
 
@@ -121,32 +121,35 @@
 
 ```
 arduino/
-├── asrtest/              ← 完整语音助手（主项目）
-│   └── asrtest.ino       录音 → ASR → 大模型 → TTS → 播放
-├── plantest/             ← 屏幕 + LittleFS 音频播放器
-│   ├── plantest.ino
-│   ├── image.h           （生成物，见下）
-│   └── audio.h           （生成物，见下）
-├── terminal/            ← ★ 接 AI 角色的终端版（HTTP 3102）
-│   ├── terminal.ino     录音 → 上传 → 取音频 → 播放 + 圆屏显示
-│   ├── config.h          （不入库）WiFi / IP / 令牌，模板见 config.example.h
-│   ├── make_images.py    角色图 → 240×240 RGB565 → images.h
-│   └── pics/             images.h + 原始 jpg
-├── mictest/              ← 麦克风单独调试
-├── aitest/               ← 大模型 API 单独调试
-├── wifitest/             ← WiFi 连接调试
-├── idle/                 ← 待机程序
+├── terminal/                      ★ 主项目：接 AI 角色的语音终端
+│   ├── terminal.ino               录音 → 上传 → 取音频 → 播放 + 圆屏显示
+│   ├── config.h                   （不入库）WiFi / IP / 令牌，模板见 config.example.h
+│   ├── make_images.py             屏幕素材 → 240×240 RGB565 → images.h
+│   └── pics/                      images.h + 三张状态图（LISTEN / THINK / SPEAK）
 │
-├── asr_server.py         ← 电脑端 ASR 服务（:8080）
-├── tts_server.py         ← 电脑端 TTS 服务（:8081，Edge TTS）
+├── server/                        电脑端服务
+│   ├── asr_server.py              语音识别（:8080）
+│   └── tts_server.py              语音合成（:8081，Edge TTS）
 │
-├── img2h.ps1             ← 图片 → RGB565 数组
-├── text2h.ps1            ← 文字 → 渲染成图 → RGB565 数组
-├── wav2h.py              ← WAV → int16 数组
-├── pick_audio.ps1        ← 弹窗选音频 → 转 22050 mono → audio.h
-├── song2esp.ps1          ← 选歌 → LittleFS 镜像 → 烧录
-├── pick.ps1              ← 弹窗选图 → image.h
-└── 换图.bat / 换音频.bat / 换歌.bat / 文字.bat
+├── tools/                         固件素材生成工具
+│   ├── img2h.ps1                  图片 → RGB565 数组
+│   ├── text2h.ps1                 文字 → 渲染成图 → RGB565 数组
+│   ├── wav2h.py                   WAV → int16 数组
+│   ├── pick.ps1 / pick_audio.ps1  弹窗选图 / 选音频
+│   ├── song2esp.ps1               选歌 → LittleFS 镜像 → 烧录
+│   └── 换图.bat / 换音频.bat / 换歌.bat / 文字.bat
+│
+├── experiments/                   逐步调试的过程代码
+│   ├── asrtest/                   完整语音助手（直连 API 版）
+│   ├── plantest/                  屏幕 + LittleFS 音频播放器
+│   ├── mictest/                   麦克风单独调试
+│   ├── aitest/                    大模型 API 单独调试
+│   ├── wifitest/                  WiFi 连接调试
+│   ├── idle/                      待机程序
+│   └── esp32_selfcheck/           芯片自检
+│
+├── notes/                         踩坑记录（五个阶段）
+└── README.md
 ```
 
 ## 快速开始
@@ -180,10 +183,10 @@ pip install imageio-ffmpeg matplotlib -i https://mirrors.aliyun.com/pypi/simple/
 
 # 起 ASR（首次会下 small 模型，约 480MB）
 $env:HF_ENDPOINT = "https://hf-mirror.com"
-python asr_server.py       # :8080
+python server/asr_server.py       # :8080
 
 # 起 TTS
-python tts_server.py       # :8081
+python server/tts_server.py       # :8081
 ```
 
 ### 3. 配置（必做，否则编译报 secrets.h: No such file）
@@ -191,9 +194,9 @@ python tts_server.py       # :8081
 `ash
 # 每份配置都有对应模板，复制后填自己的值（真文件已在 .gitignore 里）
 cp terminal/config.example.h   terminal/config.h
-cp asrtest/secrets.example.h   asrtest/secrets.h
-cp aitest/secrets.example.h    aitest/secrets.h
-cp wifitest/secrets.example.h  wifitest/secrets.h
+cp experiments/asrtest/secrets.example.h   experiments/asrtest/secrets.h
+cp experiments/aitest/secrets.example.h    experiments/aitest/secrets.h
+cp experiments/wifitest/secrets.example.h  experiments/wifitest/secrets.h
 `
 
 需要填的项：
@@ -218,11 +221,11 @@ arduino-cli compile --fqbn "esp32:esp32:esp32s3:USBMode=hwcdc,CDCOnBoot=default,
 `image.h` 和 `audio.h` 不在仓库里（生成物），需要自己生成：
 
 ```powershell
-# 换屏幕图片（输出 plantest\image.h）
-.\换图.bat
+# 换屏幕图片（输出 experiments\plantest\image.h）
+.\tools\换图.bat
 
-# 换播放音频（输出 plantest\audio.h）
-.\换音频.bat
+# 换播放音频（输出 experiments\plantest\audio.h）
+.\tools\换音频.bat
 ```
 
 ## 关键参数（已被人声验证，改动需重新测试）

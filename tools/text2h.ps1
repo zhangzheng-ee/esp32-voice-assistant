@@ -1,6 +1,6 @@
 ﻿param(
     [Parameter(Mandatory = $true)][string]$Text,
-    [string]$OutputPath = "D:\zz187\Arduino\plantest\image.h",
+    [string]$OutputPath = "D:\zz187\Arduino\experiments\plantest\image.h",
     [int]$Size = 240,
     [int]$FontSize = 36,
     [string]$FontName = "Microsoft YaHei",

@@ -1,9 +1,9 @@
-Add-Type -AssemblyName System.Windows.Forms
+﻿Add-Type -AssemblyName System.Windows.Forms
 $ErrorActionPreference = "Stop"
 
 $py = "C:\Users\zz187\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
 $wav2h = "D:\zz187\Arduino\audio_src\wav2h.py"
-$outH = "D:\zz187\Arduino\plantest\audio.h"
+$outH = "D:\zz187\Arduino\experiments\plantest\audio.h"
 $tmpWav = "D:\zz187\Arduino\audio_src\_tmp_convert.wav"
 
 $dlg = New-Object System.Windows.Forms.OpenFileDialog

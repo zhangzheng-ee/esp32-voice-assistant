@@ -19,11 +19,11 @@ littlefs.bin
 *.map
 
 # ===== 由脚本生成的头文件（可重新生成）=====
-plantest/image.h
-plantest/audio.h
-plantest/test_img.h
-plantest/image_photo_backup.h
-plantest/data/
+experiments/plantest/image.h
+experiments/plantest/audio.h
+experiments/plantest/test_img.h
+experiments/plantest/image_photo_backup.h
+experiments/plantest/data/
 
 # ===== 备份与临时 =====
 backup/
@@ -41,6 +41,7 @@ desktop.ini
 # ===== Python =====
 __pycache__/
 *.pyc
+
 # ===== 根目录生成物 / 临时脚本 =====
 test_img.h
 read2.py
@@ -49,13 +50,13 @@ read_resume.py
 # ===== 本地调试脚本（含个人网络信息，不入库）=====
 clone_voice.mjs
 test_voice.mjs
+_tts_probe.mjs
+gen_pics.py
 
 # ===== 本地配置（含 IP / 令牌）=====
 terminal/config.h
 
-# 密钥（每个子目录一份，模板 secrets.example.h）
-asrtest/secrets.h
-aitest/secrets.h
-wifitest/secrets.h
-_tts_probe.mjs
-gen_pics.py
+# ===== 密钥（每个子目录一份，模板 secrets.example.h）=====
+experiments/asrtest/secrets.h
+experiments/aitest/secrets.h
+experiments/wifitest/secrets.h

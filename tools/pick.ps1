@@ -16,4 +16,4 @@ Write-Host ""
 Write-Host "选中: $src" -ForegroundColor Cyan
 Write-Host ""
 
-& "$PSScriptRoot\img2h.ps1" -ImagePath $src -OutputPath "$PSScriptRoot\plantest\image.h"
+& "$PSScriptRoot\img2h.ps1" -ImagePath $src -OutputPath "D:\zz187\Arduino\experiments\plantest\image.h"

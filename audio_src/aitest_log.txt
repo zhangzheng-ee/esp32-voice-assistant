@@ -1,7 +1,0 @@
-﻿[http] tcp ok, 3675 ms
-[http] resp 1508 bytes, total 5230 ms
------ ANSWER -----
-
-------------------
-[done] 5230 ms
-[heap] 279276

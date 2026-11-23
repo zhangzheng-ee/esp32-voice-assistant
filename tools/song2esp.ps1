@@ -1,7 +1,7 @@
 ﻿# song2esp.ps1 - pick audio -> convert to 22050Hz mono s16le PCM -> pack LittleFS -> flash to 0x610000
 $ErrorActionPreference = "Stop"
 
-$DataDir = "D:\zz187\Arduino\plantest\data"
+$DataDir = "D:\zz187\Arduino\experiments\plantest\data"
 $ImgFile = "D:\zz187\Arduino\littlefs.bin"
 $PartSize = 0x700000
 $FlashAddr = "0x610000"
