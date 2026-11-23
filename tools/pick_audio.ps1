@@ -2,7 +2,7 @@
 $ErrorActionPreference = "Stop"
 
 $py = "C:\Users\zz187\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
-$wav2h = "D:\zz187\Arduino\audio_src\wav2h.py"
+$wav2h = "D:\zz187\Arduino\tools\wav2h.py"
 $outH = "D:\zz187\Arduino\experiments\plantest\audio.h"
 $tmpWav = "D:\zz187\Arduino\audio_src\_tmp_convert.wav"
 
