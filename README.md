@@ -116,7 +116,7 @@
     喇叭 ← ESP32 ← WAV ← GET /say?token=xxx&wait=15000
 ```
 
-`terminal/` 这版**不依赖任何第三方库**（只用 WiFi + WiFiClient + I2S）—— 因为库管理器里的 WebSockets / ArduinoJson 在国内经常拉不下来。
+`terminal/` 这版只依赖 `Arduino_GFX_Library`（驱动圆屏）—— WebSockets / ArduinoJson 这类库在国内经常拉不下来，所以音频传输和 JSON 都是手写的。
 ## 项目结构
 
 ```
@@ -127,8 +127,8 @@ arduino/
 │   ├── plantest.ino
 │   ├── image.h           （生成物，见下）
 │   └── audio.h           （生成物，见下）
-├── terminal/             ← ★ 接 AI 角色的终端版（HTTP 3102）
-│   ├── terminal.ino      录音 → 上传 → 取音频 → 播放 + 圆屏显示
+├── terminal/            ← ★ 接 AI 角色的终端版（HTTP 3102）
+│   ├── terminal.ino     录音 → 上传 → 取音频 → 播放 + 圆屏显示
 │   ├── config.h          （不入库）WiFi / IP / 令牌，模板见 config.example.h
 │   ├── make_images.py    角色图 → 240×240 RGB565 → images.h
 │   └── pics/             images.h + 原始 jpg
