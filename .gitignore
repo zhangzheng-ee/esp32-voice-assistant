@@ -57,3 +57,4 @@ terminal/config.h
 asrtest/secrets.h
 aitest/secrets.h
 wifitest/secrets.h
+_tts_probe.mjs
