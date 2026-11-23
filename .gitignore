@@ -58,3 +58,4 @@ asrtest/secrets.h
 aitest/secrets.h
 wifitest/secrets.h
 _tts_probe.mjs
+gen_pics.py
